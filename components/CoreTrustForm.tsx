@@ -27,13 +27,13 @@ const CoreTrustForm: React.FC<Props> = ({ data, onUpdate, onNext }) => {
     onUpdate({ community: { ...data.community, [e.target.name]: e.target.value } });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, category: 'mobile' | 'utility' | 'community') => {
     const files = e.target.files;
     if (files) {
       // Fix: Explicitly type 'f' as 'File' to resolve "Property 'name' does not exist on type 'unknown'" errors
       const newFiles: EvidenceFile[] = Array.from(files).map((f: File) => ({
         name: f.name,
-        type: f.type,
+        type: category, // Use the category parameter
         months: 1 // Assume each file covers 1 month for demo
       }));
       onUpdate({ evidence: [...data.evidence, ...newFiles] });
@@ -89,6 +89,27 @@ const CoreTrustForm: React.FC<Props> = ({ data, onUpdate, onNext }) => {
               </select>
             </div>
           </div>
+          
+          {/* Mobile Evidence Upload */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-blue-700 uppercase">Mobile Evidence</label>
+              <span className="text-xs text-blue-600">
+                {data.evidence.filter(f => f.type === 'mobile').length} files
+              </span>
+            </div>
+            <div className="relative border-2 border-dashed border-blue-200 rounded-lg p-3 text-center hover:bg-blue-100/50 transition-colors">
+              <input 
+                type="file" 
+                multiple 
+                onChange={(e) => handleFileUpload(e, 'mobile')} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              />
+              <div className="text-blue-600 text-xs font-medium">
+                Upload mobile bills, recharge receipts
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Section B: Utility Discipline */}
@@ -123,6 +144,27 @@ const CoreTrustForm: React.FC<Props> = ({ data, onUpdate, onNext }) => {
                 <option value="consistent">Consistent amounts</option>
                 <option value="variable">Highly variable</option>
               </select>
+            </div>
+          </div>
+          
+          {/* Utility Evidence Upload */}
+          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-yellow-700 uppercase">Utility Evidence</label>
+              <span className="text-xs text-yellow-600">
+                {data.evidence.filter(f => f.type === 'utility').length} files
+              </span>
+            </div>
+            <div className="relative border-2 border-dashed border-yellow-200 rounded-lg p-3 text-center hover:bg-yellow-100/50 transition-colors">
+              <input 
+                type="file" 
+                multiple 
+                onChange={(e) => handleFileUpload(e, 'utility')} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              />
+              <div className="text-yellow-600 text-xs font-medium">
+                Upload electricity, water, gas bills
+              </div>
             </div>
           </div>
         </section>
@@ -161,45 +203,65 @@ const CoreTrustForm: React.FC<Props> = ({ data, onUpdate, onNext }) => {
               </select>
             </div>
           </div>
+          
+          {/* Community Evidence Upload */}
+          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-green-700 uppercase">Community Evidence</label>
+              <span className="text-xs text-green-600">
+                {data.evidence.filter(f => f.type === 'community').length} files
+              </span>
+            </div>
+            <div className="relative border-2 border-dashed border-green-200 rounded-lg p-3 text-center hover:bg-green-100/50 transition-colors">
+              <input 
+                type="file" 
+                multiple 
+                onChange={(e) => handleFileUpload(e, 'community')} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              />
+              <div className="text-green-600 text-xs font-medium">
+                Upload group receipts, community proofs
+              </div>
+            </div>
+          </div>
         </section>
 
-        {/* Section D: Supporting Evidence (MANDATORY) */}
+        {/* Summary Section */}
         <section className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🧾</span>
-              <h4 className="font-bold text-indigo-900">Upload Supporting Evidence</h4>
+              <span className="text-xl">📊</span>
+              <h4 className="font-bold text-indigo-900">Evidence Summary</h4>
             </div>
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${fileProgress >= 6 ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'}`}>
               {fileProgress} of 6 months
             </span>
           </div>
           
-          <p className="text-xs text-indigo-700 font-medium">Upload utility bills, GPay receipts, or rent proofs covering at least 6 months.</p>
-          
-          <div className="relative border-2 border-dashed border-indigo-200 rounded-xl p-4 text-center hover:bg-indigo-100/50 transition-colors">
-            <input 
-              type="file" 
-              multiple 
-              onChange={handleFileUpload} 
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-            />
-            <div className="text-indigo-600 text-sm font-semibold">
-              {data.evidence.length > 0 ? `${data.evidence.length} files added` : 'Click to select or drag & drop'}
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="text-lg font-bold text-blue-700">
+                {data.evidence.filter(f => f.type === 'mobile').length}
+              </div>
+              <div className="text-xs text-blue-600">Mobile Files</div>
+            </div>
+            <div className="p-3 bg-yellow-50 rounded-lg">
+              <div className="text-lg font-bold text-yellow-700">
+                {data.evidence.filter(f => f.type === 'utility').length}
+              </div>
+              <div className="text-xs text-yellow-600">Utility Files</div>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <div className="text-lg font-bold text-green-700">
+                {data.evidence.filter(f => f.type === 'community').length}
+              </div>
+              <div className="text-xs text-green-600">Community Files</div>
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-400 italic">
-            "Documents are used to validate consistency, not individual transactions."
+          <p className="text-[10px] text-slate-400 italic text-center">
+            "Documents validate behavioral patterns across all three trust areas."
           </p>
-
-          <div className="flex flex-wrap gap-2">
-            {data.evidence.map((f, idx) => (
-              <div key={idx} className="bg-white px-2 py-1 rounded border border-slate-200 text-[10px] flex items-center gap-1">
-                <span>📄</span> {f.name}
-              </div>
-            ))}
-          </div>
         </section>
       </div>
 

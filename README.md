@@ -71,14 +71,17 @@ TrustWeave is a revolutionary fintech application that provides credit scoring f
 GenAI-fintech/
 ├── src/
 │   ├── components/          # React components
-│   │   ├── Landing.tsx      # Landing page
-│   │   ├── PurposeSelection.tsx
-│   │   ├── CoreTrustForm.tsx
-│   │   ├── LoanExperience.tsx
-│   │   ├── FinancialCapacity.tsx
-│   │   ├── AssetSupport.tsx
-│   │   ├── Processing.tsx   # AI analysis step
-│   │   └── TrustProfile.tsx # Results display
+│   │   ├── Landing.tsx      # Welcome & introduction
+│   │   ├── PurposeSelection.tsx # Loan purpose selection
+│   │   ├── CoreTrustForm.tsx    # 3 MAIN SECTIONS:
+│   │   │                        # 1. Mobile Stability
+│   │   │                        # 2. Utility Payment Discipline  
+│   │   │                        # 3. Community Reliability
+│   │   ├── LoanExperience.tsx   # Previous loan history
+│   │   ├── FinancialCapacity.tsx # Income & employment
+│   │   ├── AssetSupport.tsx     # Assets & collateral
+│   │   ├── Processing.tsx       # AI analysis step
+│   │   └── TrustProfile.tsx     # Results display
 │   ├── services/
 │   │   └── geminiService.ts # AI integration
 │   ├── types.ts             # TypeScript definitions
@@ -90,6 +93,23 @@ GenAI-fintech/
 ├── package.json
 └── README.md
 ```
+
+## 🎯 Core Assessment Areas
+
+### 1. 📱 Mobile Stability Analysis
+- **SIM Duration**: Long-term number ownership indicates stability
+- **Recharge Regularity**: Consistent top-ups show financial discipline
+- **Usage Consistency**: Predictable patterns demonstrate reliability
+
+### 2. 💡 Utility Payment Discipline
+- **On-Time Behavior**: Payment punctuality reflects responsibility
+- **Delay Frequency**: Late payment patterns indicate risk levels
+- **Bill Predictability**: Consistent amounts show financial planning
+
+### 3. 👥 Community Reliability
+- **Group Participation**: Active involvement shows social responsibility
+- **Shared Responsibility**: Reliability in commitments indicates trustworthiness
+- **Dispute History**: Conflict resolution skills demonstrate maturity
 
 ## 🤖 How It Works
 
