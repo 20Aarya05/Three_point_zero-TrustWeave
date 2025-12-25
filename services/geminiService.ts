@@ -1,55 +1,97 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { TrustAssessmentState, AssessmentResult, TrustBand } from "../types";
 
 export const analyzeTrust = async (state: TrustAssessmentState): Promise<AssessmentResult> => {
-  // Fix: Initialize the client using process.env.API_KEY directly as a named parameter
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+  // Get API key from environment variable
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+    throw new Error('VITE_GEMINI_API_KEY is not properly set. Please restart your dev server after adding the API key to .env.local');
+  }
+
   const prompt = `
-    Act as a TrustWeave Credit Reasoning Agent. Analyze the following behavioral data to determine a Trust Band (T1-T5).
-    
+    Analyze this credit data and return ONLY valid JSON:
+
     PURPOSE: ${state.purpose}
-    MOBILE STABILITY: ${JSON.stringify(state.mobile)}
-    UTILITY DISCIPLINE: ${JSON.stringify(state.utility)}
-    COMMUNITY RELIABILITY: ${JSON.stringify(state.community)}
-    EVIDENCE: ${state.evidence.length} files covering ${state.evidence.reduce((acc, curr) => acc + curr.months, 0)} months.
+    MOBILE: ${JSON.stringify(state.mobile)}
+    UTILITY: ${JSON.stringify(state.utility)}
+    COMMUNITY: ${JSON.stringify(state.community)}
+    EVIDENCE: ${state.evidence.length} files, ${state.evidence.reduce((acc, curr) => acc + curr.months, 0)} months
     LOAN EXPERIENCE: ${state.loanExperience}
-    FINANCIAL CAPACITY: ${JSON.stringify(state.financial)}
+    FINANCIAL: ${JSON.stringify(state.financial)}
     ASSETS: ${JSON.stringify(state.assets)}
 
-    Analyze consistency, responsibility, and recovery patterns.
-    Provide a Trust Band, a 1-line interpretation, a traditional credit score alignment (e.g. 750-799), and 3-4 bullet points of reasoning.
-    Be fair and look for patterns of responsibility rather than wealth.
+    Return this exact JSON structure with short, concise values:
+    {
+      "trustBand": "T1|T2|T3|T4|T5",
+      "interpretation": "Brief one-line summary (max 80 chars)",
+      "traditionalAlignment": "Score range like 750-799",
+      "reasoning": ["Short point 1", "Short point 2", "Short point 3"]
+    }
   `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          trustBand: { type: Type.STRING, enum: Object.values(TrustBand) },
-          interpretation: { type: Type.STRING },
-          traditionalAlignment: { type: Type.STRING },
-          reasoning: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          }
-        },
-        required: ["trustBand", "interpretation", "traditionalAlignment", "reasoning"]
+  try {
+    console.log('🤖 Calling Gemini API...');
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2000,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    let text = data.candidates[0].content.parts[0].text;
+
+    // Clean up the response - remove markdown code blocks if present
+    text = text.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+
+    console.log('Raw Gemini response:', text);
+
+    // Try to parse JSON with better error handling
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (parseError) {
+      console.error('JSON parse failed, raw text:', text);
+      console.error('Parse error:', parseError);
+
+      // Try to extract JSON from partial response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          result = JSON.parse(jsonMatch[0]);
+          console.log('Recovered JSON from partial response');
+        } catch (e) {
+          throw new Error('Could not parse JSON response from Gemini');
+        }
+      } else {
+        throw new Error('No valid JSON found in response');
       }
     }
-  });
 
-  try {
-    // Correct usage: Access the .text property directly from the response object
-    const text = response.text || "";
-    return JSON.parse(text.trim());
+    console.log('✅ Gemini analysis complete:', result);
+
+    return result;
   } catch (e) {
-    console.error("Failed to parse Gemini response", e);
-    // Fallback if JSON fails
+    console.error("❌ Gemini API failed:", e);
+    // Fallback if API fails
     return {
       trustBand: TrustBand.T3,
       interpretation: "Analysis completed with baseline metrics.",
